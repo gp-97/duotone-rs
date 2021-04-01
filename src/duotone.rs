@@ -2,48 +2,32 @@ use photon_rs::{effects, filters, PhotonImage};
 
 type ColorRGB = [f32; 3];
 
-fn heighten_contrast(img: &mut PhotonImage, contrast: f32) {
-    effects::adjust_contrast(img, contrast);
+fn min(num1: f32, num2: f32) -> f32 {
+    if num1 <= num2 {
+        num1
+    } else {
+        num2
+    }
+}
+fn max(num1: f32, num2: f32) -> f32 {
+    if num1 >= num2 {
+        num1
+    } else {
+        num2
+    }
 }
 
-fn rgb_to_hls(r: f32, g: f32, b: f32) -> f32 {
+fn lightness_from_rgb(r: f32, g: f32, b: f32) -> f32 {
     let r_norm = r / 255.0;
     let g_norm = g / 255.0;
     let b_norm = b / 255.0;
 
-    let max_val: f32;
-    if r_norm >= g_norm {
-        if b_norm >= r_norm {
-            max_val = b_norm;
-        } else {
-            max_val = r_norm;
-        }
-    } else {
-        if b_norm >= g_norm {
-            max_val = b_norm;
-        } else {
-            max_val = g_norm;
-        }
-    }
+    let max_val: f32 = max(b_norm, max(r_norm, g_norm));
+    let min_val: f32 = min(b_norm, min(r_norm, g_norm));
 
-    let min_val: f32;
-    if r_norm <= g_norm {
-        if b_norm <= r_norm {
-            min_val = b_norm;
-        } else {
-            min_val = r_norm;
-        }
-    } else {
-        if b_norm <= g_norm {
-            min_val = b_norm;
-        } else {
-            min_val = g_norm;
-        }
-    }
+    let lightness = min_val + (max_val - min_val) / 2.0;
 
-    let l = min_val + (max_val - min_val) / 2.0;
-
-    l
+    lightness
 }
 
 pub fn duotone(
@@ -53,7 +37,7 @@ pub fn duotone(
     contrast: f32,
 ) -> PhotonImage {
     filters::obsidian(img);
-    heighten_contrast(img, contrast);
+    effects::adjust_contrast(img, contrast);
     let img_as_raw_pixels = img.get_raw_pixels();
     let end = img_as_raw_pixels.len();
 
@@ -67,17 +51,10 @@ pub fn duotone(
         let average = (0.299 * r + 0.587 * g + 0.114 * b) as i32;
         let average = average as f32;
 
-        let l = (rgb_to_hls(average, average, average) * 254.0) as i32;
-        let l = l as f32;
+        let lightness = (lightness_from_rgb(average, average, average) * 254.0) as i32;
+        let lightness = lightness as f32;
 
-        let mut luminosity = 0_f32;
-        if l > 0.0 && l < 254.0 {
-            luminosity = l;
-        } else if l < 0.0 {
-            luminosity = 0.0;
-        } else if l > 254.0 {
-            luminosity = 254.0;
-        }
+        let luminosity = min(254.0, max(0.0, lightness));
         let ratio = luminosity / 255.0;
 
         let new_r = (light_color[0] * ratio + dark_color[0] * (1.0 - ratio)) as u8;
