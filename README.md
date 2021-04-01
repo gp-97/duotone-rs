@@ -1,1 +1,5 @@
-<div style="text-align:center"><h1 style="text-align:center">Duotone</h1></div>
+# Duotone Rust
+
+Rust crate for applying duotone effect to images.
+
+|![](./assets/t5.png)|
