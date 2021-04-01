@@ -8,7 +8,7 @@ fn main() {
     let mut img = image_io::read(read_path);
 
     let light_color: [f32; 3] = [0.0, 0.0, 90.0];
-    let dark_color: [f32; 3] = [203.0, 0.0, 0.0];
+    let dark_color: [f32; 3] = [203.0, 190.0, 190.0];
     let contrast: f32 = -10.0;
 
     let img_duotoned = duotone::duotone(&mut img, light_color, dark_color, contrast);
